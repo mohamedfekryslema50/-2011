@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#1a120e">
+  <meta name="robots" content="noindex, nofollow">
+  <title>لوحة التحكم - MAIKA PRINT</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="admin-body" data-page="admin">
+
+  <header class="admin-bar">
+    <div class="admin-title">
+      <img src="logo.png" alt="" onerror="this.onerror=function(){this.style.display='none'};this.src='logo.jpg'">
+      <h1>لوحة إدارة المتجر</h1>
+    </div>
+    <div class="admin-actions">
+      <a class="ghost-btn" href="store.html" target="_blank" rel="noopener">عرض المتجر</a>
+      <button type="button" class="delete-btn" onclick="logoutAdmin()">تسجيل الخروج</button>
+    </div>
+  </header>
+
+  <main class="admin-main">
+
+    <section class="dash-card">
+      <h2>إدارة الأقسام</h2>
+      <form class="add-box" onsubmit="event.preventDefault(); addCategory();">
+        <input type="text" id="newCategoryName" placeholder="اسم القسم الجديد (مثال: ملابس، كروت...)" aria-label="اسم القسم الجديد" autocomplete="off">
+        <button type="submit" class="action-btn">إضافة قسم</button>
+      </form>
+      <h3>الأقسام الحالية:</h3>
+      <ul id="categoriesList" class="data-list"></ul>
+    </section>
+
+    <section class="dash-card">
+      <h2>إضافة منتج جديد</h2>
+      <form id="addProductForm" onsubmit="saveProduct(event)">
+        <div class="field">
+          <label for="prodCategorySelect">اختر القسم:</label>
+          <select id="prodCategorySelect" required></select>
+        </div>
+        <div class="field">
+          <label for="prodName">اسم المنتج:</label>
+          <input type="text" id="prodName" placeholder="اسم المنتج" required autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="prodDesc">الوصف:</label>
+          <textarea id="prodDesc" rows="3" placeholder="الوصف الخاص بالمنتج" required></textarea>
+        </div>
+        <div class="field">
+          <label for="prodPrice">السعر (EGP):</label>
+          <input type="number" id="prodPrice" placeholder="السعر بالجنيه" min="0" step="any" inputmode="decimal" required>
+        </div>
+        <div class="field">
+          <label for="prodImageFile">صورة المنتج:</label>
+          <input type="file" id="prodImageFile" accept="image/*" required onchange="previewProductImage(this)">
+          <div id="imagePreview" class="image-preview"></div>
+        </div>
+        <button type="submit" id="saveProductBtn" class="action-btn full">حفظ المنتج ونشره</button>
+      </form>
+    </section>
+
+    <section class="dash-card full-width">
+      <h2>إدارة المنتجات المضافة (تعديل أو حذف)</h2>
+      <div id="adminProductsList" class="prod-list"></div>
+    </section>
+
+  </main>
+
+  <script type="module" src="script.js"></script>
+</body>
+</html>

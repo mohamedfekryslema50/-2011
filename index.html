@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#1a120e">
+  <title>MAIKA PRINT STORE</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="gate-body" data-page="gate">
+
+  <!-- خلفية: خطوط متحركة + توهج بيتحرك مع اللمس/الماوس -->
+  <div class="bg-lines" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+  <div class="bg-glow" aria-hidden="true"></div>
+
+  <main class="gate-card">
+    <!-- صورة الشعار فوق الاسم مباشرة -->
+    <img class="gate-logo" src="logo.png" alt="MAIKA PRINT STORE"
+         onerror="this.onerror=function(){this.style.display='none'};this.src='logo.jpg'">
+         
+    <h1>MAIKA PRINT STORE</h1>
+    <p class="credit" dir="ltr">Made By Eng / Mohamed Fekry</p>
+
+    <div id="portalTags" class="portal-tags"></div>
+
+    <div class="gate-actions">
+      <a class="btn-outline" href="store.html">دخول المتجر</a>
+      <button type="button" class="btn-outline btn-soft"
+              onclick="if (window.openAdminModal) { openAdminModal(); } else { alert('ملف script.js لم يتحمّل. افتح Console (F12) وشوف الخطأ الأحمر.'); }">
+        دخول الأدمن
+      </button>
+    </div>
+  </main>
+
+  <div id="adminModal" class="modal-overlay" onclick="if (event.target === this) closeAdminModal()">
+    <form class="modal-box" onsubmit="event.preventDefault(); submitAdminPass();">
+      <h3>تسجيل دخول الأدمن</h3>
+
+      <label class="file-label" for="adminPassInput">كلمة السر</label>
+      <input type="password" id="adminPassInput" autocomplete="current-password" inputmode="numeric" required>
+
+      <p id="errorMsg" role="alert"></p>
+      <div class="modal-actions">
+        <button type="submit" id="adminSubmitBtn" class="action-btn">دخول</button>
+        <button type="button" class="ghost-btn" onclick="closeAdminModal()">إلغاء</button>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    // توهج الخلفية بيتبع الماوس أو الصباع
+    (function () {
+      var root = document.documentElement;
+      window.addEventListener("pointermove", function (e) {
+        root.style.setProperty("--mx", e.clientX + "px");
+        root.style.setProperty("--my", e.clientY + "px");
+      }, { passive: true });
+    })();
+  </script>
+  <script type="module" src="script.js"></script>
+</body>
+</html>
