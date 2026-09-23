@@ -9,6 +9,38 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <style>
+    /* تنسيق الأيقونات العائمة بجانب الواتساب */
+    .floating-socials {
+      position: fixed;
+      bottom: 80px;
+      right: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 999;
+    }
+    .floating-social-btn {
+      width: 45px;
+      height: 45px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      text-decoration: none;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      transition: transform 0.2s;
+      font-weight: bold;
+      font-size: 14px;
+    }
+    .floating-social-btn:hover {
+      transform: scale(1.1);
+    }
+    .fb-bg { background-color: #1877f2; }
+    .insta-bg { background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); }
+    .tiktok-bg { background-color: #000000; }
+  </style>
 </head>
 <body class="store-body" data-page="store">
 
@@ -56,14 +88,14 @@
     <h2 class="section-title">تواصل معنا</h2>
     <p>للطلب أو الاستفسار راسلنا على واتساب</p>
     <a class="btn-outline" href="https://wa.me/201025386551" target="_blank" rel="noopener">راسلنا على واتساب</a>
-
-    <!-- روابط وسائل التواصل الاجتماعي المضافة -->
-    <div class="social-links" style="margin-top: 20px; display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
-      <a href="https://www.facebook.com/share/1CrMGDjxjQ/" target="_blank" rel="noopener" style="color: #fff; text-decoration: none; padding: 8px 15px; background: #1877f2; border-radius: 5px; font-weight: 600;">فيسبوك</a>
-      <a href="https://www.instagram.com/mayka_store2011?utm_source=qr&stkn=MXAxNjYzZnVsb2Nqaw==" target="_blank" rel="noopener" style="color: #fff; text-decoration: none; padding: 8px 15px; background: #e4405f; border-radius: 5px; font-weight: 600;">إنستغرام</a>
-      <a href="https://www.tiktok.com/@mohammedra80?_r=1&_t=ZS-99x5mWDe7KH" target="_blank" rel="noopener" style="color: #fff; text-decoration: none; padding: 8px 15px; background: #000000; border-radius: 5px; font-weight: 600;">تيك توك</a>
-    </div>
   </section>
+
+  <!-- الأيقونات العائمة لوسائل التواصل الاجتماعي بجانب الواتساب -->
+  <div class="floating-socials">
+    <a href="https://www.facebook.com/share/1CrMGDjxjQ/" target="_blank" rel="noopener" class="floating-social-btn fb-bg" title="فيسبوك">في</a>
+    <a href="https://www.instagram.com/mayka_store2011?utm_source=qr&stkn=MXAxNjYzZnVsb2Nqaw==" target="_blank" rel="noopener" class="floating-social-btn insta-bg" title="إنستغرام">إن</a>
+    <a href="https://www.tiktok.com/@mohammedra80?_r=1&_t=ZS-99x5mWDe7KH" target="_blank" rel="noopener" class="floating-social-btn tiktok-bg" title="تيك توك">تك</a>
+  </div>
 
   <!-- زر السلة العائم -->
   <button type="button" class="cart-fab" onclick="toggleCartModal()" aria-label="فتح السلة">
