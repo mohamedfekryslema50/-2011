@@ -6,7 +6,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import {
   getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc,
-  query, where, writeBatch, getCountFromServer
+  query, where, writeBatch, getCountFromServer, getDoc
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import {
   getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged
@@ -23,11 +23,11 @@ const firebaseConfig = {
   measurementId: "G-L702SYRN8C"
 };
 
-const STORE_WHATSAPP = "201025386551";                   // رقم واتساب المتجر
-const PROMO_CODES = { MAIKA10: 0.10, WELCOME20: 0.20 }; // أكواد الخصم
+const STORE_WHATSAPP = "201025386551"; 
+const PROMO_CODES = { MAIKA10: 0.10, WELCOME20: 0.20 };
 const SUGGESTED_CATEGORIES = ["طباعة ديجيتال", "ملابس وهدايا", "بوسترات وكروت"];
-const IMAGE_MAX_SIZE = 400;   // أقصى بُعد للصورة بعد الضغط (بكسل)
-const IMAGE_QUALITY = 0.7;    // جودة JPEG
+const IMAGE_MAX_SIZE = 400; 
+const IMAGE_QUALITY = 0.7; 
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
@@ -98,7 +98,7 @@ function compressImage(file, maxSize = IMAGE_MAX_SIZE, quality = IMAGE_QUALITY) 
 }
 
 // =====================================================
-//  1) تسجيل دخول الأدمن (معدلة لتتوافق مع index.html)
+// 1) تسجيل دخول الأدمن
 // =====================================================
 function openAdminModal() {
   const modal = $("adminModal");
@@ -132,7 +132,6 @@ async function submitAdminPass() {
   if (btn) btn.disabled = true;
 
   try {
-    // إيميل افتراضي ثابت مربوط بكلمة السر في Firebase Authentication
     const adminEmail = "admin@maikaprint.com"; 
     await signInWithEmailAndPassword(auth, adminEmail, pass);
     safeStorage.set("adminAuth", "true");
@@ -159,7 +158,7 @@ async function logoutAdmin() {
 }
 
 // =====================================================
-//  2) الأقسام
+// 2) الأقسام
 // =====================================================
 async function fetchCategories() {
   const snap = await getDocs(collection(db, "categories"));
@@ -320,7 +319,7 @@ async function deleteCategory(id) {
 }
 
 // =====================================================
-//  3) المنتجات (لوحة الأدمن)
+// 3) المنتجات (لوحة الأدمن)
 // =====================================================
 let previewUrl = null;
 
@@ -432,7 +431,7 @@ async function deleteProduct(id) {
 }
 
 // =====================================================
-//  4) المتجر
+// 4) المتجر
 // =====================================================
 let currentActiveCategory = "";
 let storeCategories = [];
@@ -452,19 +451,12 @@ function paintTabs(activeName) {
 
 function productCardHtml(p) {
   return `
-    <article class="product-card">
+    <article class="product-card" onclick="window.location.href='product.html?id=${p.id}'" style="cursor: pointer;">
       <img src="${escapeHtml(p.image)}" alt="${escapeHtml(p.name)}" loading="lazy" decoding="async">
       <h3>${escapeHtml(p.name)}</h3>
       <p>${escapeHtml(p.desc)}</p>
       <div class="price">${Number(p.price)} EGP</div>
-      <div class="card-qty">
-        <div class="qty">
-          <button type="button" onclick="stepQty('${p.id}', -1)" aria-label="تقليل الكمية">&minus;</button>
-          <input type="number" id="qty-${p.id}" value="1" min="1" max="999" inputmode="numeric" aria-label="الكمية">
-          <button type="button" onclick="stepQty('${p.id}', 1)" aria-label="زيادة الكمية">+</button>
-        </div>
-      </div>
-      <button type="button" class="action-btn full" onclick="addToCart('${p.id}')">إضافة للسلة</button>
+      <button type="button" class="action-btn full" onclick="event.stopPropagation(); window.location.href='product.html?id=${p.id}'">عرض المنتج والطلب</button>
     </article>`;
 }
 
@@ -570,7 +562,128 @@ function stepQty(id, delta) {
 }
 
 // =====================================================
-//  5) السلة وواتساب
+// 5) صفحة تفاصيل المنتج ورفع الصور المتعددة
+// =====================================================
+let customImagesList = [];
+
+async function initProductDetailsPage() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const productId = urlParams.get("id");
+  const container = $("productDetailsContent");
+  if (!container) return;
+
+  if (!productId) {
+    container.innerHTML = '<p class="muted" style="text-align: center; grid-column: 1/-1;">المنتج غير موجود.</p>';
+    return;
+  }
+
+  try {
+    const docSnap = await getDoc(doc(db, "products", productId));
+    
+    if (!docSnap.exists()) {
+      container.innerHTML = '<p class="muted" style="text-align: center; grid-column: 1/-1;">عذراً، هذا المنتج غير متوفر.</p>';
+      return;
+    }
+
+    const p = docSnap.data();
+    container.innerHTML = `
+      <div>
+        <img src="${escapeHtml(p.image)}" alt="${escapeHtml(p.name)}" class="product-big-img" id="mainDisplayImg">
+      </div>
+      <div class="product-info-side">
+        <h1>${escapeHtml(p.name)}</h1>
+        <div class="price">${Number(p.price)} EGP</div>
+        <p class="muted" style="margin-bottom: 16px; white-space: pre-line;">${escapeHtml(p.desc)}</p>
+        
+        <div class="custom-upload-box">
+          <label>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            تحميل الصور المطلوبة (يمكنك رفع أكثر من صورة)
+            <input type="file" id="multiImageInput" multiple accept="image/*" style="display: none;" onchange="handleMultiImages(this)">
+          </label>
+          <div id="uploadedThumbnails" class="uploaded-images-preview"></div>
+        </div>
+
+        <div class="field">
+          <label>أدخل رسالتك الخاصة أو ملاحظات الطلب:</label>
+          <textarea id="customNotesInput" placeholder="اكتب النص أو الملاحظات هنا..."></textarea>
+        </div>
+
+        <div class="card-qty" style="justify-content: flex-start; margin-bottom: 16px;">
+          <div class="qty">
+            <button type="button" onclick="stepQty('detail-qty', -1)">&minus;</button>
+            <input type="number" id="qty-detail-qty" value="1" min="1" max="999" inputmode="numeric">
+            <button type="button" onclick="stepQty('detail-qty', 1)">+</button>
+          </div>
+        </div>
+
+        <button type="button" class="action-btn full" onclick="addCustomProductToCart('${productId}', '${escapeHtml(p.name)}', ${p.price})">أضف إلى السلة</button>
+      </div>
+    `;
+  } catch (e) {
+    console.error(e);
+    container.innerHTML = '<p class="muted" style="text-align: center; grid-column: 1/-1;">حدث خطأ أثناء تحميل المنتج.</p>';
+  }
+}
+
+async function handleMultiImages(input) {
+  const thumbsContainer = $("uploadedThumbnails");
+  if (!input.files) return;
+  
+  for (let file of input.files) {
+    try {
+      const compressed = await compressImage(file);
+      customImagesList.push(compressed);
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  if (thumbsContainer) {
+    thumbsContainer.innerHTML = customImagesList.map((imgSrc, idx) => `
+      <div style="position: relative;">
+        <img src="${escapeHtml(imgSrc)}" class="uploaded-thumb">
+        <button type="button" onclick="removeCustomImage(${idx})" style="position: absolute; top: -5px; right: -5px; background: var(--danger); color: #fff; border: none; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; cursor: pointer;">&times;</button>
+      </div>
+    `).join("");
+  }
+}
+
+function removeCustomImage(index) {
+  customImagesList.splice(index, 1);
+  const thumbsContainer = $("uploadedThumbnails");
+  if (thumbsContainer) {
+    thumbsContainer.innerHTML = customImagesList.map((imgSrc, idx) => `
+      <div style="position: relative;">
+        <img src="${escapeHtml(imgSrc)}" class="uploaded-thumb">
+        <button type="button" onclick="removeCustomImage(${idx})" style="position: absolute; top: -5px; right: -5px; background: var(--danger); color: #fff; border: none; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; cursor: pointer;">&times;</button>
+      </div>
+    `).join("");
+  }
+}
+
+function addCustomProductToCart(productId, productName, productPrice) {
+  const qtyInput = $("qty-detail-qty");
+  const quantity = Math.min(999, Math.max(1, parseInt(qtyInput ? qtyInput.value : 1, 10) || 1));
+  const notes = $("customNotesInput") ? $("customNotesInput").value.trim() : "";
+
+  const cart = getCart();
+  cart.push({
+    id: productId,
+    name: productName,
+    price: Number(productPrice),
+    quantity: quantity,
+    customImages: [...customImagesList],
+    notes: notes
+  });
+
+  saveCart(cart);
+  showToast(`تمت إضافة ${productName} للسلة بنجاح`);
+  toggleCartModal();
+}
+
+// =====================================================
+// 6) السلة وواتساب
 // =====================================================
 let activeDiscount = 0;
 
@@ -595,7 +708,7 @@ function addToCart(productId) {
   const quantity = Math.min(999, Math.max(1, parseInt(qtyInput ? qtyInput.value : 1, 10) || 1));
 
   const cart = getCart();
-  const existing = cart.find((item) => item.id === productId);
+  const existing = cart.find((item) => item.id === productId && !item.customImages && !item.notes);
   if (existing) {
     existing.quantity = Math.min(999, existing.quantity + quantity);
   } else {
@@ -669,6 +782,8 @@ function updateCartUI() {
       <div class="cart-info">
         <strong>${escapeHtml(item.name)}</strong>
         <small>${item.price} EGP × ${item.quantity} = ${(item.price * item.quantity).toFixed(2)} EGP</small>
+        ${item.notes ? `<br><small style="color:var(--gold);">ملاحظة: ${escapeHtml(item.notes)}</small>` : ""}
+        ${item.customImages && item.customImages.length ? `<br><small style="color:var(--gold);">تم إرفاق ${item.customImages.length} صورة خاصة</small>` : ""}
       </div>
       <div class="qty">
         <button type="button" onclick="changeCartQty(${index}, -1)" aria-label="تقليل الكمية">&minus;</button>
@@ -699,6 +814,8 @@ function sendCartToWhatsApp() {
     const line = item.price * item.quantity;
     subtotal += line;
     message += `${i + 1}. *${item.name}* (العدد: ${item.quantity}) - ${line} EGP\n`;
+    if (item.notes) message += `   📝 ملاحظة: ${item.notes}\n`;
+    if (item.customImages && item.customImages.length) message += `   🖼️ مرفق ${item.customImages.length} صورة تصميم للطباعة\n`;
   });
   if (activeDiscount > 0) {
     message += `\n*خصم ${Math.round(activeDiscount * 100)}%*`;
@@ -718,13 +835,15 @@ Object.assign(window, {
   saveProduct, previewProductImage, updateProduct, deleteProduct,
   selectCategory, filterProducts, stepQty,
   addToCart, changeCartQty, removeFromCart, applyPromoCode,
-  toggleCartModal, sendCartToWhatsApp
+  toggleCartModal, sendCartToWhatsApp,
+  initProductDetailsPage, handleMultiImages, removeCustomImage, addCustomProductToCart
 });
 
 function boot() {
   const page = document.body.dataset.page;
   if (page === "gate") renderPortalTags();
   if (page === "store") { displayStoreTabs(); updateCartUI(); }
+  if (page === "product-details") { initProductDetailsPage(); updateCartUI(); }
   if (page === "admin") { checkAdminAuth(); refreshAdminCategories(); renderAdminProducts(); }
 }
 
