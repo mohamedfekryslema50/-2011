@@ -56,9 +56,10 @@
           <input type="number" id="prodPrice" placeholder="السعر بالجنيه" min="0" step="any" inputmode="decimal" required>
         </div>
         <div class="field">
-          <label for="prodImageFile">صورة المنتج:</label>
-          <input type="file" id="prodImageFile" accept="image/*" required onchange="previewProductImage(this)">
-          <div id="imagePreview" class="image-preview"></div>
+          <label for="prodImageFile">صور المنتج (يمكنك اختيار أكثر من صورة):</label>
+          <!-- تم إضافة خاصية multiple للسماح برفع أكثر من صورة -->
+          <input type="file" id="prodImageFile" accept="image/*" multiple required onchange="previewProductImage(this)">
+          <div id="imagePreview" class="image-preview" style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px;"></div>
         </div>
         <button type="submit" id="saveProductBtn" class="action-btn full">حفظ المنتج ونشره</button>
       </form>
