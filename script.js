@@ -319,18 +319,55 @@ async function deleteCategory(id) {
 }
 
 // =====================================================
-// 3) المنتجات (لوحة الأدمن)
+// 3) المنتجات (لوحة الأدمن - دعم صور متعددة)
 // =====================================================
-let previewUrl = null;
+let adminSelectedImages = [];
 
-function previewProductImage(input) {
+async function previewProductImage(input) {
   const box = $("imagePreview");
   if (!box) return;
-  if (previewUrl) { URL.revokeObjectURL(previewUrl); previewUrl = null; }
-  const file = input.files && input.files[0];
-  if (!file) { box.innerHTML = ""; return; }
-  previewUrl = URL.createObjectURL(file);
-  box.innerHTML = `<img src="${previewUrl}" alt="معاينة الصورة">`;
+  if (!input.files || input.files.length === 0) {
+    adminSelectedImages = [];
+    box.innerHTML = "";
+    return;
+  }
+
+  adminSelectedImages = [];
+  box.innerHTML = '<p class="muted" style="font-size:12px;">جاري معالجة الصور...</p>';
+
+  for (let file of input.files) {
+    try {
+      const compressed = await compressImage(file);
+      adminSelectedImages.push(compressed);
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  box.innerHTML = adminSelectedImages.map((imgSrc, idx) => `
+    <div style="position: relative; display: inline-block; margin: 4px;">
+      <img src="${escapeHtml(imgSrc)}" alt="معاينة" style="width: 60px; height: 60px; object-fit: cover; border-radius: 6px; border: 1px solid #ccc;">
+      <button type="button" onclick="removeAdminImage(${idx})" style="position: absolute; top: -5px; right: -5px; background: #e74c3c; color: #fff; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 11px; cursor: pointer; display: flex; align-items: center; justify-content: center;">&times;</button>
+    </div>
+  `).join("");
+}
+
+function removeAdminImage(index) {
+  adminSelectedImages.splice(index, 1);
+  const box = $("imagePreview");
+  if (!box) return;
+  if (adminSelectedImages.length === 0) {
+    box.innerHTML = "";
+    const fileInput = $("prodImageFile");
+    if (fileInput) fileInput.value = "";
+    return;
+  }
+  box.innerHTML = adminSelectedImages.map((imgSrc, idx) => `
+    <div style="position: relative; display: inline-block; margin: 4px;">
+      <img src="${escapeHtml(imgSrc)}" alt="معاينة" style="width: 60px; height: 60px; object-fit: cover; border-radius: 6px; border: 1px solid #ccc;">
+      <button type="button" onclick="removeAdminImage(${idx})" style="position: absolute; top: -5px; right: -5px; background: #e74c3c; color: #fff; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 11px; cursor: pointer; display: flex; align-items: center; justify-content: center;">&times;</button>
+    </div>
+  `).join("");
 }
 
 async function saveProduct(event) {
@@ -340,28 +377,35 @@ async function saveProduct(event) {
   const name = $("prodName").value.trim();
   const desc = $("prodDesc").value.trim();
   const price = Number($("prodPrice").value);
-  const file = $("prodImageFile").files[0];
 
   if (!category) return showToast("اختار القسم أولاً", "error");
   if (!name) return showToast("اكتب اسم المنتج", "error");
   if (!Number.isFinite(price) || price < 0) return showToast("السعر غير صحيح", "error");
-  if (!file) return showToast("اختار صورة للمنتج", "error");
-  if (!file.type.startsWith("image/")) return showToast("الملف لازم يكون صورة", "error");
+  if (!adminSelectedImages.length) return showToast("اختار صورة واحدة على الأقل للمنتج", "error");
 
   const btn = $("saveProductBtn");
   const oldText = btn.textContent;
   btn.disabled = true;
-  btn.textContent = "جاري الحفظ...";
+  btn.textContent = "جاري الحفظ ونشر المنتج...";
 
   try {
-    const image = await compressImage(file);
-    if (image.length > 900000) throw new Error("الصورة كبيرة حتى بعد الضغط. جرّب صورة أصغر");
+    // حفظ الصور كـ مصفوفة images بالإضافة إلى حفظ أول صورة في حفرة image احتياطياً للتوافق القديم
     await addDoc(collection(db, "products"), {
-      category, name, desc, price, image, createdAt: Date.now()
+      category, 
+      name, 
+      desc, 
+      price, 
+      image: adminSelectedImages[0], 
+      images: adminSelectedImages, 
+      createdAt: Date.now()
     });
-    showToast("تم حفظ المنتج ونشره");
+    
+    showToast("تم حفظ المنتج ونشره بنجاح");
     form.reset();
-    previewProductImage($("prodImageFile"));
+    adminSelectedImages = [];
+    const box = $("imagePreview");
+    if (box) box.innerHTML = "";
+    
     await Promise.all([renderAdminProducts(), refreshAdminCategories()]);
   } catch (e) {
     console.error(e);
@@ -385,9 +429,15 @@ async function renderAdminProducts() {
       return;
     }
     items.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-    box.innerHTML = items.map((p) => `
+    box.innerHTML = items.map((p) => {
+      const displayImg = (p.images && p.images.length > 0) ? p.images[0] : p.image;
+      const imgCountText = (p.images && p.images.length > 1) ? `<small style="display:block; color:var(--gold);">(${p.images.length} صور مرفقة)</small>` : "";
+      return `
       <article class="prod-row">
-        <img src="${escapeHtml(p.image)}" alt="${escapeHtml(p.name)}">
+        <div>
+          <img src="${escapeHtml(displayImg)}" alt="${escapeHtml(p.name)}" style="width:60px; height:60px; object-fit:cover; border-radius:4px;">
+          ${imgCountText}
+        </div>
         <div class="prod-info">
           <strong>${escapeHtml(p.name)} <small>(${escapeHtml(p.category)})</small></strong>
           <textarea id="desc-${p.id}" rows="2" aria-label="الوصف">${escapeHtml(p.desc)}</textarea>
@@ -397,7 +447,8 @@ async function renderAdminProducts() {
           <button type="button" class="action-btn" onclick="updateProduct('${p.id}')">تحديث</button>
           <button type="button" class="delete-btn" onclick="deleteProduct('${p.id}')">حذف</button>
         </div>
-      </article>`).join("");
+      </article>`;
+    }).join("");
   } catch (e) {
     console.error(e);
     box.innerHTML = '<p class="muted">خطأ في جلب المنتجات</p>';
@@ -450,9 +501,10 @@ function paintTabs(activeName) {
 }
 
 function productCardHtml(p) {
+  const mainImg = (p.images && p.images.length > 0) ? p.images[0] : p.image;
   return `
     <article class="product-card" onclick="window.location.href='product.html?id=${p.id}'" style="cursor: pointer;">
-      <img src="${escapeHtml(p.image)}" alt="${escapeHtml(p.name)}" loading="lazy" decoding="async">
+      <img src="${escapeHtml(mainImg)}" alt="${escapeHtml(p.name)}" loading="lazy" decoding="async">
       <h3>${escapeHtml(p.name)}</h3>
       <p>${escapeHtml(p.desc)}</p>
       <div class="price">${Number(p.price)} EGP</div>
@@ -562,7 +614,7 @@ function stepQty(id, delta) {
 }
 
 // =====================================================
-// 5) صفحة تفاصيل المنتج ورفع الصور المتعددة
+// 5) صفحة تفاصيل المنتج وعرض معرض الصور للمنتج
 // =====================================================
 let customImagesList = [];
 
@@ -586,30 +638,46 @@ async function initProductDetailsPage() {
     }
 
     const p = docSnap.data();
-    container.innerHTML = `
+    const productImages = (p.images && p.images.length > 0) ? p.images : [p.image];
+    const mainImg = productImages[0];
+
+    // بناء معرض الصور المصغرة إذا كان المنتج يحتوي على أكثر من صورة
+    let galleryHtml = `
       <div>
-        <img src="${escapeHtml(p.image)}" alt="${escapeHtml(p.name)}" class="product-big-img" id="mainDisplayImg">
-      </div>
+        <img src="${escapeHtml(mainImg)}" alt="${escapeHtml(p.name)}" class="product-big-img" id="mainDisplayImg" style="width: 100%; max-height: 400px; object-fit: cover; border-radius: 8px;">
+    `;
+    
+    if (productImages.length > 1) {
+      galleryHtml += `<div class="product-thumbnails" style="display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap;">`;
+      productImages.forEach((imgSrc) => {
+        galleryHtml += `<img src="${escapeHtml(imgSrc)}" onclick="document.getElementById('mainDisplayImg').src='${escapeHtml(imgSrc)}'" style="width: 60px; height: 60px; object-fit: cover; border-radius: 6px; cursor: pointer; border: 2px solid #ddd; transition: 0.2s;" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='#ddd'">`;
+      });
+      galleryHtml += `</div>`;
+    }
+    galleryHtml += `</div>`;
+
+    container.innerHTML = `
+      ${galleryHtml}
       <div class="product-info-side">
         <h1>${escapeHtml(p.name)}</h1>
         <div class="price">${Number(p.price)} EGP</div>
         <p class="muted" style="margin-bottom: 16px; white-space: pre-line;">${escapeHtml(p.desc)}</p>
         
         <div class="custom-upload-box">
-          <label>
+          <label style="cursor: pointer; display: inline-flex; align-items: center; gap: 8px;">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
             تحميل الصور المطلوبة (يمكنك رفع أكثر من صورة)
             <input type="file" id="multiImageInput" multiple accept="image/*" style="display: none;" onchange="handleMultiImages(this)">
           </label>
-          <div id="uploadedThumbnails" class="uploaded-images-preview"></div>
+          <div id="uploadedThumbnails" class="uploaded-images-preview" style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px;"></div>
         </div>
 
-        <div class="field">
+        <div class="field" style="margin-top: 15px;">
           <label>أدخل رسالتك الخاصة أو ملاحظات الطلب:</label>
           <textarea id="customNotesInput" placeholder="اكتب النص أو الملاحظات هنا..."></textarea>
         </div>
 
-        <div class="card-qty" style="justify-content: flex-start; margin-bottom: 16px;">
+        <div class="card-qty" style="justify-content: flex-start; margin-bottom: 16px; margin-top: 15px;">
           <div class="qty">
             <button type="button" onclick="stepQty('detail-qty', -1)">&minus;</button>
             <input type="number" id="qty-detail-qty" value="1" min="1" max="999" inputmode="numeric">
@@ -641,9 +709,9 @@ async function handleMultiImages(input) {
 
   if (thumbsContainer) {
     thumbsContainer.innerHTML = customImagesList.map((imgSrc, idx) => `
-      <div style="position: relative;">
-        <img src="${escapeHtml(imgSrc)}" class="uploaded-thumb">
-        <button type="button" onclick="removeCustomImage(${idx})" style="position: absolute; top: -5px; right: -5px; background: var(--danger); color: #fff; border: none; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; cursor: pointer;">&times;</button>
+      <div style="position: relative; display: inline-block;">
+        <img src="${escapeHtml(imgSrc)}" class="uploaded-thumb" style="width: 60px; height: 60px; object-fit: cover; border-radius: 6px; border: 1px solid #ccc;">
+        <button type="button" onclick="removeCustomImage(${idx})" style="position: absolute; top: -5px; right: -5px; background: #e74c3c; color: #fff; border: none; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center;">&times;</button>
       </div>
     `).join("");
   }
@@ -654,9 +722,9 @@ function removeCustomImage(index) {
   const thumbsContainer = $("uploadedThumbnails");
   if (thumbsContainer) {
     thumbsContainer.innerHTML = customImagesList.map((imgSrc, idx) => `
-      <div style="position: relative;">
-        <img src="${escapeHtml(imgSrc)}" class="uploaded-thumb">
-        <button type="button" onclick="removeCustomImage(${idx})" style="position: absolute; top: -5px; right: -5px; background: var(--danger); color: #fff; border: none; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; cursor: pointer;">&times;</button>
+      <div style="position: relative; display: inline-block;">
+        <img src="${escapeHtml(imgSrc)}" class="uploaded-thumb" style="width: 60px; height: 60px; object-fit: cover; border-radius: 6px; border: 1px solid #ccc;">
+        <button type="button" onclick="removeCustomImage(${idx})" style="position: absolute; top: -5px; right: -5px; background: #e74c3c; color: #fff; border: none; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center;">&times;</button>
       </div>
     `).join("");
   }
@@ -832,7 +900,7 @@ function sendCartToWhatsApp() {
 Object.assign(window, {
   openAdminModal, closeAdminModal, submitAdminPass, logoutAdmin,
   addCategory, addSuggestedCategories, deleteCategory,
-  saveProduct, previewProductImage, updateProduct, deleteProduct,
+  saveProduct, previewProductImage, removeAdminImage, updateProduct, deleteProduct,
   selectCategory, filterProducts, stepQty,
   addToCart, changeCartQty, removeFromCart, applyPromoCode,
   toggleCartModal, sendCartToWhatsApp,
