@@ -389,7 +389,6 @@ async function saveProduct(event) {
   btn.textContent = "جاري الحفظ ونشر المنتج...";
 
   try {
-    // حفظ الصور كـ مصفوفة images بالإضافة إلى حفظ أول صورة في حفرة image احتياطياً للتوافق القديم
     await addDoc(collection(db, "products"), {
       category, 
       name, 
@@ -614,7 +613,7 @@ function stepQty(id, delta) {
 }
 
 // =====================================================
-// 5) صفحة تفاصيل المنتج وعرض معرض الصور للمنتج
+// 5) صفحة تفاصيل المنتج ومعرض الصور الأفقي (Slider/Scroll)
 // =====================================================
 let customImagesList = [];
 
@@ -641,16 +640,21 @@ async function initProductDetailsPage() {
     const productImages = (p.images && p.images.length > 0) ? p.images : [p.image];
     const mainImg = productImages[0];
 
-    // بناء معرض الصور المصغرة إذا كان المنتج يحتوي على أكثر من صورة
+    // بناء معرض الصور مع التمرير الأفقي
     let galleryHtml = `
-      <div>
-        <img src="${escapeHtml(mainImg)}" alt="${escapeHtml(p.name)}" class="product-big-img" id="mainDisplayImg" style="width: 100%; max-height: 400px; object-fit: cover; border-radius: 8px;">
+      <div class="product-gallery-container">
+        <img src="${escapeHtml(mainImg)}" alt="${escapeHtml(p.name)}" class="product-big-img" id="mainDisplayImg">
     `;
     
     if (productImages.length > 1) {
-      galleryHtml += `<div class="product-thumbnails" style="display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap;">`;
-      productImages.forEach((imgSrc) => {
-        galleryHtml += `<img src="${escapeHtml(imgSrc)}" onclick="document.getElementById('mainDisplayImg').src='${escapeHtml(imgSrc)}'" style="width: 60px; height: 60px; object-fit: cover; border-radius: 6px; cursor: pointer; border: 2px solid #ddd; transition: 0.2s;" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='#ddd'">`;
+      galleryHtml += `<div class="product-thumbnails-scroll">`;
+      productImages.forEach((imgSrc, index) => {
+        const activeClass = index === 0 ? "active" : "";
+        galleryHtml += `
+          <img src="${escapeHtml(imgSrc)}" 
+               class="thumb-item ${activeClass}" 
+               onclick="changeMainImage(this, '${escapeHtml(imgSrc)}')" 
+               alt="صورة مصغرة">`;
       });
       galleryHtml += `</div>`;
     }
@@ -692,6 +696,15 @@ async function initProductDetailsPage() {
     console.error(e);
     container.innerHTML = '<p class="muted" style="text-align: center; grid-column: 1/-1;">حدث خطأ أثناء تحميل المنتج.</p>';
   }
+}
+
+function changeMainImage(element, imgSrc) {
+  const mainImg = document.getElementById("mainDisplayImg");
+  if (mainImg) mainImg.src = imgSrc;
+  
+  const thumbs = document.querySelectorAll(".thumb-item");
+  thumbs.forEach(t => t.classList.remove("active"));
+  element.classList.add("active");
 }
 
 async function handleMultiImages(input) {
@@ -904,7 +917,7 @@ Object.assign(window, {
   selectCategory, filterProducts, stepQty,
   addToCart, changeCartQty, removeFromCart, applyPromoCode,
   toggleCartModal, sendCartToWhatsApp,
-  initProductDetailsPage, handleMultiImages, removeCustomImage, addCustomProductToCart
+  initProductDetailsPage, changeMainImage, handleMultiImages, removeCustomImage, addCustomProductToCart
 });
 
 function boot() {
