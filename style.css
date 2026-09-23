@@ -1,5 +1,5 @@
 /* =========================================================
-   MAIKA PRINT STORE - style.css (المُحدث والشامل لتنسيق لوحة التحكم)
+   MAIKA PRINT STORE - style.css (المُحدث والشامل والجاهز)
    بني غامق + ذهبي | مصمم للموبايل أولاً (mobile-first)
    ========================================================= */
 
@@ -170,6 +170,7 @@ input[type="file"] { width: 100%; color: var(--sand); font-size: .9rem; padding:
   padding: 24px 18px;
   overflow-x: hidden;
   background: linear-gradient(180deg, #1a120e 0%, #33251f 100%);
+  min-height: 100vh;
 }
 
 .bg-lines { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
@@ -278,7 +279,7 @@ input[type="file"] { width: 100%; color: var(--sand); font-size: .9rem; padding:
   box-shadow: 0 0 0 2px rgba(212, 163, 115, .35), 0 0 18px rgba(212, 163, 115, .3);
 }
 
-.search-wrap { max-width: 520px; margin: 14px auto 10px; }
+.search-wrap { max-width: 520px; margin: 14px auto 10px; padding: 0 16px; }
 .search-wrap input[type="text"] {
   min-height: 42px;
   padding: 8px 18px;
@@ -380,6 +381,104 @@ input[type="file"] { width: 100%; color: var(--sand); font-size: .9rem; padding:
 
 .contact { padding: 24px 24px 100px; text-align: center; }
 .contact p { margin: 4px 0 18px; color: var(--gold-soft); }
+
+/* =========================================================
+   صفحة تفاصيل المنتج (product.html) - متناسقة ومظبوطة تماماً للموبايل
+   ========================================================= */
+.product-details-container {
+  max-width: 900px;
+  margin: 16px auto;
+  padding: 0 12px 80px;
+  width: 100%;
+}
+
+.product-details-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+  background: var(--cocoa);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-l);
+  padding: 16px;
+  align-items: start;
+}
+
+@media (min-width: 768px) {
+  .product-details-grid {
+    grid-template-columns: 360px 1fr;
+    padding: 24px;
+    gap: 30px;
+  }
+}
+
+.product-big-img {
+  width: 100%;
+  max-width: 260px; /* ضبط وتحديد الحجم ليكون ممتازاً على الهواتف */
+  height: auto;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  border-radius: var(--radius-m);
+  background: var(--umber);
+  border: 1px solid var(--line-strong);
+  margin: 0 auto; /* تمركز الصورة في المنتصف على الموبايل */
+  display: block;
+}
+
+@media (min-width: 768px) {
+  .product-big-img {
+    max-width: 100%;
+    margin: 0;
+  }
+}
+
+.product-info-side {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.product-info-side h1 {
+  font-size: 1.4rem;
+  color: var(--cream);
+}
+
+.product-info-side .price {
+  font-size: 1.2rem;
+  color: var(--gold);
+  font-weight: 700;
+}
+
+.custom-upload-box {
+  border: 1.5px dashed var(--line-strong);
+  padding: 12px;
+  border-radius: var(--radius-s);
+  background: var(--ink);
+}
+
+.custom-upload-box label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  color: var(--gold);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.uploaded-images-preview {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.uploaded-thumb {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid var(--gold);
+}
 
 /* عدّاد الكمية */
 .qty { display: inline-flex; align-items: center; border: 1px solid var(--line-strong); border-radius: 999px; overflow: hidden; }
@@ -529,7 +628,7 @@ input[type="file"] { width: 100%; color: var(--sand); font-size: .9rem; padding:
 .cart-total { display: flex; justify-content: space-between; margin: 8px 0 14px; font-size: 1.15rem; font-weight: 700; }
 
 /* =========================================================
-   تنسيقات لوحة التحكم (Admin Panel Layout Fix)
+   تنسيقات لوحة التحكم (Admin Panel Layout)
    ========================================================= */
 .admin-body {
   background: var(--page);
@@ -578,7 +677,6 @@ input[type="file"] { width: 100%; color: var(--sand); font-size: .9rem; padding:
   color: var(--sand);
 }
 
-/* تنظيم لوحة التحكم بشكل شبكي على الشاشات الكبيرة */
 @media (min-width: 900px) {
   .admin-main {
     grid-template-columns: repeat(2, 1fr);
