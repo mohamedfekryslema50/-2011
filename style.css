@@ -1,5 +1,5 @@
 /* =========================================================
-   MAIKA PRINT STORE - style.css (المُحدث بالميزات الاحترافية)
+   MAIKA PRINT STORE - style.css (المُحدث والشامل لتنسيق لوحة التحكم)
    بني غامق + ذهبي | مصمم للموبايل أولاً (mobile-first)
    ========================================================= */
 
@@ -529,7 +529,68 @@ input[type="file"] { width: 100%; color: var(--sand); font-size: .9rem; padding:
 .cart-total { display: flex; justify-content: space-between; margin: 8px 0 14px; font-size: 1.15rem; font-weight: 700; }
 
 /* =========================================================
-   شاشات أكبر
+   تنسيقات لوحة التحكم (Admin Panel Layout Fix)
+   ========================================================= */
+.admin-body {
+  background: var(--page);
+}
+
+.admin-header {
+  padding: 20px 16px;
+  text-align: center;
+  background: var(--ink);
+  border-bottom: 1px solid var(--line);
+}
+
+.admin-header h1 {
+  font-size: 1.5rem;
+  color: var(--gold);
+  margin-bottom: 6px;
+}
+
+.admin-main {
+  display: grid;
+  gap: 20px;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+}
+
+.dash-card {
+  background: var(--cocoa);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-l);
+  padding: 22px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.dash-card h2 {
+  margin-bottom: 14px;
+  font-size: 1.2rem;
+  color: var(--gold);
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 8px;
+}
+
+.dash-card h3 {
+  margin: 16px 0 8px;
+  font-size: 1rem;
+  color: var(--sand);
+}
+
+/* تنظيم لوحة التحكم بشكل شبكي على الشاشات الكبيرة */
+@media (min-width: 900px) {
+  .admin-main {
+    grid-template-columns: repeat(2, 1fr);
+    align-items: start;
+  }
+  .admin-main .full-width {
+    grid-column: 1 / -1;
+  }
+}
+
+/* =========================================================
+   شاشات أكبر (عام)
    ========================================================= */
 @media (min-width: 700px) {
   .products-grid { grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 16px; padding: 8px 20px 32px; }
